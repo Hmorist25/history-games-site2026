@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Изучение истории через видеоигры</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:linear-gradient(180deg,#0b0b0b,#1a1a1a,#0b0b0b);
+  color:#e0e0e0;
+  text-align:center;
+}
+
+/* Загрузка */
+#loader{
+  position:fixed;
+  width:100%;
+  height:100%;
+  background:#0b0b0b;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  z-index:9999;
+}
+.loader{
+  border:6px solid #333;
+  border-top:6px solid #ffa500;
+  border-radius:50%;
+  width:60px;
+  height:60px;
+  animation:spin 1s linear infinite;
+}
+@keyframes spin{
+  0%{transform:rotate(0deg);}
+  100%{transform:rotate(360deg);}
+}
+
+.container{
+  display:flex;
+}
+
+.sidebar{
+  width:250px;
+  background:#1e1e1e;
+  padding:15px;
+  text-align:center;
+}
+
+.sidebar h3{
+  color:#ffa500;
+  margin-bottom:20px;
+}
+
+main{
+  flex:1;
+  background:#1a1a1a;
+  margin:20px;
+  border-radius:10px;
+  box-shadow:0 0 15px rgba(0,0,0,0.5);
+  text-align:center;
+}
+
+header{
+  background:#0d1117;
+  color:#ffa500;
+  padding:25px;
+  border-radius:10px 10px 0 0;
+}
+
+section{
+  padding:30px;
+  max-width:900px;
+  margin:auto;
+}
+
+h2{
+  color:#ffa500;
+  margin-bottom:20px;
+}
+
+/* Карточки игр (Steam-style) */
+.flip-card{
+  background:transparent;
+  width:100%;
+  height:240px;
+  perspective:1000px;
+  margin-bottom:20px;
+  transition:transform 0.3s ease, box-shadow 0.3s ease;
+}
+.flip-card:hover{
+  transform: translateY(-5px);
+  box-shadow:0 10px 25px rgba(255,165,0,0.7);
+}
+.flip-card-inner{
+  position:relative;
+  width:100%;
+  height:100%;
+  transition:transform 0.6s;
+  transform-style:preserve-3d;
+  cursor:pointer;
+  border-radius:10px;
+}
+.flip-card.flipped .flip-card-inner{
+  transform:rotateY(180deg);
+}
+.flip-card-front,
+.flip-card-back{
+  position:absolute;
+  width:100%;
+  height:100%;
+  backface-visibility:hidden;
+  border-radius:10px;
+  overflow:hidden;
+}
+.flip-card-front img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  border:2px solid #333;
+  transition: transform 0.3s ease;
+}
+.flip-card-back{
+  background:#1a1a1a;
+  transform:rotateY(180deg);
+  padding:15px;
+  font-size:14px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  border:2px solid #ffa500;
+}
+
+/* Игры */
+.game{
+  margin-bottom:50px;
+}
+.game img{
+  width:100%;
+  max-width:600px;
+  margin:15px auto;
+  border-radius:8px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.6);
+}
+.game-button{
+  background:#ffa500;
+  color:#121212;
+  padding:12px 20px;
+  border:none;
+  border-radius:8px;
+  font-size:16px;
+  cursor:pointer;
+  display:block;
+  margin:15px auto;
+  transition:0.3s;
+}
+.game-button:hover{
+  background:#ffbf00;
+  transform:scale(1.05);
+}
+.game-description{
+  max-height:0;
+  opacity:0;
+  overflow:hidden;
+  transition:0.6s;
+  text-align:center;
+}
+.game-description.show{
+  max-height:500px;
+  opacity:1;
+}
+
+/* Анимация появления */
+.reveal{
+  opacity:0;
+  transform:translateY(40px);
+  transition:1s;
+}
+.reveal.active{
+  opacity:1;
+  transform:translateY(0);
+}
+
+/* Кнопка наверх */
+#topBtn{
+  position:fixed;
+  bottom:30px;
+  right:30px;
+  background:#ffa500;
+  color:black;
+  border:none;
+  padding:12px 18px;
+  border-radius:8px;
+  font-size:16px;
+  cursor:pointer;
+  display:none;
+}
+#topBtn:hover{
+  background:#ffbf00;
+}
+
+/* Стили списка */
+ul{
+  list-style:none;
+  padding:0;
+}
+
+/* Подсказки */
+.tooltip{
+  position:relative;
+  display:inline-block;
+  cursor:pointer;
+}
+.tooltip .tooltiptext{
+  visibility:hidden;
+  width:180px;
+  background-color:#333;
+  color:#fff;
+  text-align:center;
+  border-radius:6px;
+  padding:5px;
+  position:absolute;
+  z-index:1;
+  bottom:125%;
+  left:50%;
+  margin-left:-90px;
+  opacity:0;
+  transition:opacity 0.3s;
+}
+.tooltip:hover .tooltiptext{
+  visibility:visible;
+  opacity:1;
+}
+
+.footer{
+  text-align:center;
+  margin:30px;
+  font-size:14px;
+  color:#aaa;
+}
+
+/* Фильтр игр */
+.filter-buttons{
+  margin-bottom:20px;
+}
+.filter-buttons button{
+  background:#ffa500;
+  color:#121212;
+  border:none;
+  border-radius:5px;
+  padding:8px 15px;
+  margin:0 5px;
+  cursor:pointer;
+  transition:0.3s;
+}
+.filter-buttons button:hover{
+  background:#ffbf00;
+}
+</style>
+</head>
+
+<body>
+
+<div id="loader">
+  <div class="loader"></div>
+  <p>Загрузка проекта...</p>
+</div>
+
+<button id="topBtn" onclick="topFunction()">Наверх</button>
+
+<div class="container">
+
+<!-- Левая панель: личности по хронологии -->
+<div class="sidebar">
+<h3>Исторические личности</h3>
+
+<div class="tooltip"><p>Дмитрий Донской</p><span class="tooltiptext">1350–1389, князь Москвы, победил Орду в Куликовской битве</span></div>
+<div class="flip-card reveal" onclick="flipCard(this)">
+  <div class="flip-card-inner"><div class="flip-card-front"><img src="images/donskoi.jpg"></div><div class="flip-card-back">1350–1389<br>Князь Москвы, победа на Куликовом поле</div></div>
+</div>
+
+<div class="tooltip"><p>Иван Грозный</p><span class="tooltiptext">1533–1584, первый русский царь, централизовал власть</span></div>
+<div class="flip-card reveal" onclick="flipCard(this)">
+  <div class="flip-card-inner"><div class="flip-card-front"><img src="images/ivan4.jpg"></div><div class="flip-card-back">1533–1584<br>Первый русский царь</div></div>
+</div>
+
+<div class="tooltip"><p>Пётр I</p><span class="tooltiptext">1682–1725, провёл реформы, создал флот</span></div>
+<div class="flip-card reveal" onclick="flipCard(this)">
+  <div class="flip-card-inner"><div class="flip-card-front"><img src="images/peter1.jpg"></div><div class="flip-card-back">1682–1725<br>Создатель флота и реформатор</div></div>
+</div>
+
+<div class="tooltip"><p>Екатерина II</p><span class="tooltiptext">1762–1796, укрепила Россию, расширила её влияние</span></div>
+<div class="flip-card reveal" onclick="flipCard(this)">
+  <div class="flip-card-inner"><div class="flip-card-front"><img src="images/catherine2.jpg"></div><div class="flip-card-back">1762–1796<br>Императрица России</div></div>
+</div>
+
+<div class="tooltip"><p>Александр Суворов</p><span class="tooltiptext">1730–1800, великий полководец, не проиграл ни одного сражения</span></div>
+<div class="flip-card reveal" onclick="flipCard(this)">
+  <div class="flip-card-inner"><div class="flip-card-front"><img src="images/suvorov.jpg"></div><div class="flip-card-back">1730–1800<br>Великий полководец</div></div>
+</div>
+
+<div class="tooltip"><p>Михаил Кутузов</p><span class="tooltiptext">1745–1813, главнокомандующий русской армией в 1812</span></div>
+<div class="flip-card reveal" onclick="flipCard(this)">
+  <div class="flip-card-inner"><div class="flip-card-front"><img src="images/kutuzov.jpg"></div><div class="flip-card-back">1745–1813<br>Командующий армией 1812 года</div></div>
+</div>
+
+<div class="tooltip"><p>Николай II</p><span class="tooltiptext">1868–1918, последний император России</span></div>
+<div class="flip-card reveal" onclick="flipCard(this)">
+  <div class="flip-card-inner"><div class="flip-card-front"><img src="images/nikolai2.jpg"></div><div class="flip-card-back">Последний император России</div></div>
+</div>
+
+<div class="tooltip"><p>Владимир Ленин</p><span class="tooltiptext">1870–1924, лидер революции, основатель СССР</span></div>
+<div class="flip-card reveal" onclick="flipCard(this)">
+  <div class="flip-card-inner"><div class="flip-card-front"><img src="images/lenin.jpg"></div><div class="flip-card-back">1917–1924<br>Основатель СССР</div></div>
+</div>
+
+<div class="tooltip"><p>Иосиф Сталин</p><span class="tooltiptext">1878–1953, руководил СССР во время войны</span></div>
+<div class="flip-card reveal" onclick="flipCard(this)">
+  <div class="flip-card-inner"><div class="flip-card-front"><img src="images/stalin.jpg"></div><div class="flip-card-back">1924–1953<br>Руководил страной</div></div>
+</div>
+
+<div class="tooltip"><p>Георгий Жуков</p><span class="tooltiptext">1896–1974, маршал СССР, победы во Второй мировой</span></div>
+<div class="flip-card reveal" onclick="flipCard(this)">
+  <div class="flip-card-inner"><div class="flip-card-front"><img src="images/zhukov.jpg"></div><div class="flip-card-back">Маршал СССР, командующий Победой</div></div>
+</div>
+
+</div>
+
+<!-- Основной контент -->
+<main>
+
+<header>
+<h1>Изучение истории через видеоигры</h1>
+<p>Сделал Акобян Эрик — проект для 11 класса</p>
+</header>
+
+<section>
+
+<h2>Что такое стратегические игры</h2>
+<p>Стратегические игры — это жанр видеоигр, где игрок управляет государством, армией или цивилизацией, принимает решения по развитию экономики, технологий и войск, и участвует в дипломатии. Они часто используют реальные исторические события и личности.</p>
+
+<h3>Преимущества стратегических игр</h3>
+<ul>
+<li>Развитие стратегического мышления</li>
+<li>Знакомство с историческими эпохами</li>
+<li>Изучение известных личностей</li>
+<li>Навыки планирования и принятия решений</li>
+<li>Повышение интереса к истории</li>
+</ul>
+
+<h2>Известные стратегии</h2>
+
+<!-- Фильтр -->
+<div class="filter-buttons reveal">
+<button onclick="filterGames('all')">Все эпохи</button>
+<button onclick="filterGames('16')">XVI век</button>
+<button onclick="filterGames('18')">XVIII век</button>
+<button onclick="filterGames('20')">XX век</button>
+</div>
+
+<!-- Игры -->
+<div class="game reveal" data-era="16">
+<h3>Age of Empires II</h3>
+<img src="images/aoe2.png">
+<button class="game-button" onclick="toggleDescription('d1')">Подробнее</button>
+<div id="d1" class="game-description">
+<p>Историческая стратегия, где игрок развивает цивилизацию, ведет войны и управляет ресурсами.</p>
+<p>В игре представлены <b>Иван Грозный</b> и другие личности России XVI века. Позволяет изучать эпоху становления централизованного государства.</p>
+</div>
+</div>
+
+<div class="game reveal" data-era="18">
+<h3>Civilization VI</h3>
+<img src="images/civ6.png">
+<button class="game-button" onclick="toggleDescription('d2')">Подробнее</button>
+<div id="d2" class="game-description">
+<p>Пошаговая глобальная стратегия, где игрок строит города, развивает науку, дипломатию и армию.</p>
+<p>Российскую цивилизацию ведет <b>Екатерина II</b>, показывая политику и реформы XVIII века.</p>
+</div>
+</div>
+
+<div class="game reveal" data-era="20">
+<h3>Hearts of Iron IV</h3>
+<img src="images/hoi4.png">
+<button class="game-button" onclick="toggleDescription('d3')">Подробнее</button>
+<div id="d3" class="game-description">
+<p>Глобальная стратегия о Второй мировой войне. Управление армией, экономикой и дипломатией.</p>
+<p>Представлены <b>Иосиф Сталин</b> и <b>Георгий Жуков</b>, что помогает изучать события 1941–1945 годов.</p>
+</div>
+</div>
+
+<div class="game reveal" data-era="18">
+<h3>Total War: Empire</h3>
+<img src="images/empiretw.jpg">
+<button class="game-button" onclick="toggleDescription('d4')">Подробнее</button>
+<div id="d4" class="game-description">
+<p>Стратегия XVIII века с крупными сражениями, дипломатией и экономикой.</p>
+<p>Можно управлять <b>Петром I</b> и российской империей, изучая эпоху Петровских реформ.</p>
+</div>
+</div>
+
+<div class="game reveal" data-era="20">
+<h3>Company of Heroes 2</h3>
+<img src="images/coh2.jpg">
+<button class="game-button" onclick="toggleDescription('d5')">Подробнее</button>
+<div id="d5" class="game-description">
+<p>Стратегия в реальном времени о Великой Отечественной войне, с исторической точностью.</p>
+<p>Представлены <b>Иосиф Сталин</b> и <b>Георгий Жуков</b>, показывая действия военных лидеров и тактику войск.</p>
+</div>
+</div>
+
+<!-- Вывод -->
+<div class="reveal" style="margin:50px auto; max-width:800px; background:#1e1e1e; padding:20px; border-radius:8px;">
+<h2>Вывод</h2>
+<p>Стратегические видеоигры помогают изучать историю, погружая игрока в реальные события и эпохи.</p>
+<p>Они показывают действия известных личностей, важные сражения и развитие государств.</p>
+<p>Повышают интерес к предмету и делают обучение увлекательным.</p>
+<p>Тем не менее, игры следует использовать вместе с учебниками и достоверными источниками.</p>
+</div>
+
+</section>
+
+</main>
+
+<!-- Правая панель -->
+<div class="sidebar">
+<h3>Исторические события</h3>
+
+<div class="tooltip"><p>Куликовская битва</p><span class="tooltiptext">1380 — победа войск Дмитрия Донского над Золотой Ордой</span></div>
+<div class="flip-card reveal" onclick="flipCard(this)"><div class="flip-card-inner"><div class="flip-card-front"><img src="images/kulikovo.jpg"></div><div class="flip-card-back">1380 год — победа Дмитрия Донского</div></div></div>
+
+<div class="tooltip"><p>Ледовое побоище</p><span class="tooltiptext">1242 — победа Александра Невского на Чудском озере</span></div>
+<div class="flip-card reveal" onclick="flipCard(this)"><div class="flip-card-inner"><div class="flip-card-front"><img src="images/ledovoe.jpg"></div><div class="flip-card-back">1242 год — победа Александра Невского</div></div></div>
+
+<div class="tooltip"><p>Полтавская битва</p><span class="tooltiptext">1709 — решающая победа России над Швецией</span></div>
+<div class="flip-card reveal" onclick="flipCard(this)"><div class="flip-card-inner"><div class="flip-card-front"><img src="images/poltava.jpg"></div><div class="flip-card-back">1709 год — победа России над Швецией</div></div></div>
+
+<div class="tooltip"><p>Бородинское сражение</p><span class="tooltiptext">1812 — крупнейшее сражение Отечественной войны с Наполеоном</span></div>
+<div class="flip-card reveal" onclick="flipCard(this)"><div class="flip-card-inner"><div class="flip-card-front"><img src="images/borodino.jpg"></div><div class="flip-card-back">1812 год — сражение с Наполеоном</div></div></div>
+
+<div class="tooltip"><p>Великая Отечественная война</p><span class="tooltiptext">1941–1945 — борьба против нацистской Германии</span></div>
+<div class="flip-card reveal" onclick="flipCard(this)"><div class="flip-card-inner"><div class="flip-card-front"><img src="images/ww2.jpg"></div><div class="flip-card-back">1941–1945 — борьба с Германией</div></div></div>
+
+</div>
+
+</div>
+
+<div class="footer">
+Сделал Акобян Эрик — проект для 11 класса
+</div>
+
+<script>
+function flipCard(card){ card.classList.toggle("flipped"); }
+function toggleDescription(id){ document.getElementById(id).classList.toggle("show"); }
+window.addEventListener("scroll", reveal);
+function reveal(){
+  let reveals=document.querySelectorAll(".reveal");
+  for(let i=0;i<reveals.length;i++){
+    let windowHeight=window.innerHeight;
+    let elementTop=reveals[i].getBoundingClientRect().top;
+    if(elementTop < windowHeight-100){ reveals[i].classList.add("active"); }
+  }
+}
+let topBtn=document.getElementById("topBtn");
+window.onscroll=function(){
+  if(document.body.scrollTop>300 || document.documentElement.scrollTop>300){ topBtn.style.display="block"; }
+  else{ topBtn.style.display="none";}
+};
+function topFunction(){ window.scrollTo({top:0,behavior:'smooth'}); }
+window.onload=function(){ setTimeout(function(){ document.getElementById("loader").style.display="none"; },1000); }
+
+/* Фильтр игр */
+function filterGames(era){
+  let games=document.querySelectorAll(".game");
+  if(era==='all'){ era=''; }
+  games.forEach(g=>{
+    if(era==='' || g.dataset.era===era){ g.style.display='block'; } else{ g.style.display='none'; }
+  });
+}
+</script>
+
+</body>
+</html>
